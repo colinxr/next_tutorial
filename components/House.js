@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
 const House = (props) => {
-  console.log(props)
   return (
     <Link href="/houses/[id]" as={'/houses/' + props.id}>
       <a>

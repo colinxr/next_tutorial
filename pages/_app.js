@@ -1,11 +1,16 @@
 import App from 'next/app'
+import { StoreProvider } from 'easy-peasy'
+import store from '../store'
 
-export default  class extends App {
+class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props
-    
     return (
-      <Component {...pageProps} />
+      <StoreProvider store={store}>
+        <Component {...pageProps} />
+      </StoreProvider>
     )
   }
 }
+
+export default MyApp
