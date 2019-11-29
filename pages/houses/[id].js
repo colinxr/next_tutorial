@@ -9,7 +9,7 @@ const House = props => {
   const [dateChosen, setDateChosen] = useState(false);
   const [numberOfNights, setNumberOfNights] = useState(0)
 
-  const setShowLoginModal = useStoreAction(
+  const setShowLoginModal = useStoreActions(
     actions => actions.modals.setShowLoginModal
   )
 

@@ -1,6 +1,9 @@
-import { Sequelize, Model, DataTypes } from 'sequelize'
-import bcrypt from 'bcrypt'
-import { user, password, host, database } from './database'
+const bcrypt = require('bcrypt')
+const Sequelize = require('sequelize');
+const Database = require('./database.js');
+const Model = Sequelize.Model
+const DataTypes = Sequelize.DataTypes
+const { database, user, password, host } = Database
 
 const sequelize = new Sequelize(database, user, password, {
   host,
@@ -10,7 +13,7 @@ const sequelize = new Sequelize(database, user, password, {
 
 
 
-export class User extends Model {}
+class User extends Model {}
 
 User.init({
   email: {
@@ -37,3 +40,6 @@ User.init({
 User.prototype.isPasswordValid = async function(password) {
   return await bcrypt.compare(password, this.password)
 }
+
+exports.User = User
+exports.sequelize = sequelize

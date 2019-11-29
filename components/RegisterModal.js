@@ -7,9 +7,17 @@ export default props => {
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
 
   const submit = async () => {
-    const resp = await Axios.post('/api/auth/register', { email, password, passwordConfirmation});
-
-    console.log(resp);
+    try {
+      console.log(email, password, passwordConfirmation)
+      const response = await Axios.post('/auth/register', {email, password, passwordConfirmation})
+      if (response.data.status === 'error') {
+        alert(response.data.message)
+        return
+      }
+    } catch (error) {
+      alert(error.response.data.message)
+      return
+    }
   }
 
   return (
