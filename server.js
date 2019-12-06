@@ -7,7 +7,6 @@ const dev            = process.env.NODE_env !== 'production'
 const nextApp        = next({ dev })
 const handle         = nextApp.getRequestHandler()
 
-
 const session        = require('express-session')
 const SequelizeStore = require('connect-session-sequelize')(session.Store)
 const bodyParser     = require('body-parser')
@@ -15,15 +14,20 @@ const bodyParser     = require('body-parser')
 const passport       = require('passport')
 const LocalStrategy  = require('passport-local').Strategy
 
-const User           = require('./model.js').User
-const sequelize      = require('./model.js').sequelize
-
+const User           = require('./models/User.js')
+const House          = require('./models/House.js')
+const Review         = require('./models/Review.js')
+const sequelize      = require('./database.js')
 
 dotenv.config();
 
 const sessionStore = new SequelizeStore({
   db: sequelize
 })
+
+User.sync({ alter: true })
+House.sync({ alter: true })
+Review.sync({ alter: true })
 
 // sessionStore.sync()
 
@@ -82,14 +86,6 @@ nextApp.prepare().then(() => {
     passport.initialize(),
     passport.session() 
   )
-
-  // app.get('/', (req, res) => {
-  //   res.send('hello world');
-  // })
-  
-  app.get('/api/auth', async (req, res) => {
-    return res.end(JSON.stringify({ status: 'success', message: 'get the api route /api/auth' }))
-  })
 
   app.post('/api/auth/register', async (req, res) => {
     const { email, password, passwordConfirmation } = req.body
