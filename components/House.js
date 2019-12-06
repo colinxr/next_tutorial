@@ -2,8 +2,8 @@ import Link from 'next/link'
 
 const House = (props) => {
   return (
-    <Link href="/houses/[id]" as={'/houses/' + props.id}>
-      <a>
+    // <Link href="/houses/[id]" as={'/houses/' + props.id}>
+      <a href={'/houses/' + props.id}>
         <img src={props.picture} width='100%' alt='House picture' />
         <p>
           {props.type} - {props.town}
@@ -13,7 +13,7 @@ const House = (props) => {
           {props.rating} ({props.reviewsCount})
         </p> 
       </a>
-    </Link>
+    // </Link>
   )
 }
 

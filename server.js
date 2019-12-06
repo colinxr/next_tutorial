@@ -1,24 +1,31 @@
 const express        = require('express')
-const bodyParser     = require('body-parser')
-const session        = require('express-session')
 const next           = require('next')
 const dotenv         = require('dotenv');
-const passport       = require('passport')
-const LocalStrategy  = require('passport-local').Strategy
-const SequelizeStore = require('connect-session-sequelize')(session.Store)
-const User           = require('./model.js').User
-const sequelize      = require('./model.js').sequelize
 
 const port           = parseInt(process.env.PORT, 10) || 3000
 const dev            = process.env.NODE_env !== 'production'
 const nextApp        = next({ dev })
 const handle         = nextApp.getRequestHandler()
 
+
+const session        = require('express-session')
+const SequelizeStore = require('connect-session-sequelize')(session.Store)
+const bodyParser     = require('body-parser')
+
+const passport       = require('passport')
+const LocalStrategy  = require('passport-local').Strategy
+
+const User           = require('./model.js').User
+const sequelize      = require('./model.js').sequelize
+
+
 dotenv.config();
 
 const sessionStore = new SequelizeStore({
   db: sequelize
 })
+
+// sessionStore.sync()
 
 passport.use(new LocalStrategy({
   usernameField: 'email',
@@ -57,6 +64,7 @@ passport.deserializeUser((email, done) => {
 nextApp.prepare().then(() => {
   const app = express()
   
+  app.use(bodyParser.urlencoded())
   app.use(bodyParser.json())
 
   app.use(
@@ -75,22 +83,15 @@ nextApp.prepare().then(() => {
     passport.session() 
   )
 
-  // sessionStore.sync()
-
-  // app.all('*', (req, res) => {
-  //   return handle(req, res)
+  // app.get('/', (req, res) => {
+  //   res.send('hello world');
   // })
-
-  app.get('/', (req, res) => {
-    res.send('hello world');
-  })
   
   app.get('/api/auth', async (req, res) => {
     return res.end(JSON.stringify({ status: 'success', message: 'get the api route /api/auth' }))
   })
 
   app.post('/api/auth/register', async (req, res) => {
-    console.log(req.body)
     const { email, password, passwordConfirmation } = req.body
 
     if (password !== passwordConfirmation) {
@@ -102,12 +103,25 @@ nextApp.prepare().then(() => {
 
     try {
       const user = await User.create({ email, password })
-      res.login(user, err => {
-        if (err) {
+      // res.login(user, error => {
+      //   if (error) {
+      //     res.statusCode = 500
+      //     return res.end(JSON.stringify({ status: 'error', message: 'fuck' }))
+      //   }
+        
+      //   return res.end(
+      //     JSON.stringify({ status: 'success', message: 'Logged in' })
+      //   )
+      // })
+
+      req.login(user, error => {
+        if (error) {
           res.statusCode = 500
-          res.end(JSON.stringify({ status: 'error', message: err }))
+          res.end(JSON.stringify({status: 'error', message: error}))
           return
         }
+
+        return res.end(JSON.stringify({status: 'success', message: 'Logged In'}))
       })
 
       res.end(JSON.stringify({ status: 'success', message: 'User added' }))
@@ -117,8 +131,64 @@ nextApp.prepare().then(() => {
       if (error.name === 'SequelizeUniqueConstraintError') {
         message = 'User already exists'
       }
-      res.end(JSON.stringify({ status: 'error', message }))
+      console.log(error)
+      res.end(JSON.stringify({ status: 'error', message: message }))
     }
+  })
+
+  app.post('/api/auth/login', (req, res) => {
+    passport.authenticate('local', (error, user, info) => {
+      if (error) {
+        res.statusCode = 500
+        res.end(
+          JSON.stringify({
+            status: 'error',
+            message: error
+          })
+        )
+        return 
+      }
+
+      if (!user) {
+        res.status = 500
+        res.end(
+          JSON.stringify({
+            status: 'error',
+            message: 'No User found'
+          })
+        )
+      }
+
+      req.login(user, error => {
+        if (error) {
+          res.statusCode = 500
+          res.end(
+            JSON.stringify({
+              status: 'error',
+              message: error
+            })
+          )
+          return
+        }
+
+        return res.end(
+          JSON.stringify({
+            status: 'success',
+            message: 'Logged in'
+          })
+        )
+      })
+    })(req, res, next)
+  })
+
+  app.post('/api/auth/logout', (req, res) => {
+    req.logout()
+    req.session.destroy()
+    return res.end(JSON.stringify({status: 'message', message: 'loggedt out'}))
+  })
+
+  app.all('*', (req, res) => {
+    return handle(req, res)
   })
 
   app.listen(port, err => {

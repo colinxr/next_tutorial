@@ -32,12 +32,13 @@ User.init({
     beforeCreate: async user => {
       const saltRounds = 10
       const salt = await bcrypt.genSalt(saltRounds)
-      user.password - await bcrypt.has(user.password, salt)
+      user.password = await bcrypt.hash(user.password, salt)
     }
   }
 })
 
 User.prototype.isPasswordValid = async function(password) {
+  console.log(password)
   return await bcrypt.compare(password, this.password)
 }
 

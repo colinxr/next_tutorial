@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { useStoreActions } from 'easy-peasy'
+import { useStoreState, useStoreActions } from 'easy-peasy'
+import Axios from 'axios'
 
 const Header = () => {
   const setShowLoginModal = useStoreActions(
@@ -9,16 +9,41 @@ const Header = () => {
     actions => actions.modals.setShowRegisterModal
   )
 
+  const user = useStoreState(state => state.user.user)
+  const setUser = useStoreActions(actions => actions.user.setUser)
+
+  const handleLogout = async() => {
+    await Axios.post('/api/auth/logout')
+    setUser(null)
+  }
+
   return (
     <div className='nav-container'>
       <nav>
-        <ul>
-          <li>
-            <a onClick={() => setShowRegisterModal()}>Sign up</a>
-          </li>
-          <li>
-            <a onClick={() => setShowLoginModal()}>Log in</a>
-          </li>
+      <ul>
+        {user ? (
+          <>
+            <li className='username'>{user}</li>
+            <li>
+              <a href='#' onClick={ () => handleLogout() }>
+                Log Out
+              </a>
+            </li>
+          </>
+        ) : (
+            <>
+              <li>
+                <a href='#' onClick={() => setShowRegisterModal()}>
+                  Sign up
+                </a>
+              </li>
+              <li>
+                <a href='#' onClick={() => setShowLoginModal()}>
+                  Log in
+                </a>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
 
@@ -55,6 +80,9 @@ const Header = () => {
 
         ul {
           float: right;
+        }
+        .username {
+          padding: 1em 0.5em;
         }
       `}</style>
     </div>
