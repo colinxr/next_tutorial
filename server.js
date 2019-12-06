@@ -87,6 +87,18 @@ nextApp.prepare().then(() => {
     passport.session() 
   )
 
+  app.get('/api/houses', (req, res) => {
+    House.findAndCountAll()
+      .then(result => {
+        const houses = results.row.map(house => house.dataValues)
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json'
+        })
+        
+        res.end(JSON.stringify(houses))
+      })
+  })
   app.post('/api/auth/register', async (req, res) => {
     const { email, password, passwordConfirmation } = req.body
 
