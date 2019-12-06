@@ -89,16 +89,19 @@ nextApp.prepare().then(() => {
 
   app.get('/api/houses', (req, res) => {
     House.findAndCountAll()
-      .then(result => {
-        const houses = results.row.map(house => house.dataValues)
+      .then(results => {
+        console.log(results)
+
+        const houses = results.rows.map(house => house.dataValues)
 
         res.writeHead(200, {
           'Content-Type': 'application/json'
         })
-        
+
         res.end(JSON.stringify(houses))
       })
   })
+  
   app.post('/api/auth/register', async (req, res) => {
     const { email, password, passwordConfirmation } = req.body
 
