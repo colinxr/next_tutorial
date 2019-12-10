@@ -45,4 +45,22 @@ router.get('/houses/:id', (req, res) => {
   })
 })
 
+router.post('/houses/reserve', (req, res) => {
+  const email = req.session.passport.user 
+  const {houseID, userID, startDate, endDate} = req.body
+  User.findOne({where: { email }})
+    .then(user => {
+      Booking.create({
+        houseID: houseID,
+        userID: userID,
+        startDate: startDate,
+        endDate: endDate 
+      })
+      .then(() => {
+        res.writeHead(200, {'Content-Type': 'application/json'})
+        res.end(JSON.stringify({status: 'success', message: 'ok'}))
+      })
+    })
+})
+
 module.exports = router
