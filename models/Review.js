@@ -13,11 +13,11 @@ Review.init({
   },
   houseID: {type: Sequelize.DataTypes.INTEGER, allowNull: false, },
   userID: { type: Sequelize.DataTypes.INTEGER, allowNull: false},
-  comment: { type: Sequelize.DataTypes.TEXT, allowNull: false}
+  comment: { type: Sequelize.DataTypes.TEXT, allowNull: false},
 }, {
   sequelize,
   modelName: 'review',
-  timestamps: false,
+  timestamps: true,
 })
 
 module.exports = Review

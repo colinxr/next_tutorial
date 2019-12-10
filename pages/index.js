@@ -29,11 +29,9 @@ const Index = (props) => {
 
 }
 
-Index.getInitialProps = async () => {
+Index.getInitialProps = async ({query }) => {
   const resp = await fetch(`${process.env.BASE_URL}/api/houses`)
-
   const houses = await resp.json()
-
   return { houses }
 }
 

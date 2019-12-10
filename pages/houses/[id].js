@@ -1,13 +1,18 @@
 import { useState } from 'react'
-import { useStoreActions } from 'easy-peasy'
+import { useStoreActions, useStoreState } from 'easy-peasy'
+import Axios from 'axios'
 import Head from 'next/head'
+import fetch from 'isomorphic-unfetch'
 import Layout from '../../components/Layout'
 import DateRangePicker from '../../components/DateRangePicker'
-import houses from '../houses.json'
 
 const House = props => {
-  const [dateChosen, setDateChosen] = useState(false);
+  const [dateChosen, setDateChosen] = useState(false)
   const [numberOfNights, setNumberOfNights] = useState(0)
+  const [startDate, setStartDate] = useState()
+  const [endDate, setEndDate] = useState()
+
+  const user = useStoreState(state => state.user.user)
 
   const setShowLoginModal = useStoreActions(
     actions => actions.modals.setShowLoginModal
@@ -25,6 +30,10 @@ const House = props => {
     return dayCount
   }
 
+  const handleBooking = () => {
+    alert('booked!')
+  }
+
   return (
     <Layout
       content={
@@ -38,9 +47,26 @@ const House = props => {
               {props.house.type} - {props.house.town}
             </p>
             <p>{props.house.title}</p>
-            <p>
-              {props.house.rating} ({props.house.reviewsCount})
-            </p>
+            {
+          props.house.reviewsCount ? (
+                <div className="reviews">
+                  <h3>{
+                    props.house.reviewsCount === 1 ? `${props.house.reviewsCount} Review` : `{props.house.reviewsCount} Reviews`
+                  }</h3>
+                  {
+                    props.house.reviews.map((review, index) => {
+                      return (
+                        <div key={index}>
+                          <p>{new Date(review.createdAt).toDateString()}</p>
+                          <p>{review.comment}</p>
+                        </div>
+                      )
+                    })
+                  }
+
+                </div>
+              ) : ''
+            }
           </article>
           <aside>
             <h2>Add Dates for Prices</h2>
@@ -49,6 +75,8 @@ const House = props => {
                 const length = findNumberOfNights(startDate, endDate);
                 setNumberOfNights(length)
                 setDateChosen(true)
+                setStartDate(startDate)
+                setEndDate(endDate)
               }} 
             />
             {dateChosen && (
@@ -62,7 +90,8 @@ const House = props => {
                 <button 
                   className="reserve"
                   onClick={() => {
-                    setShowLoginModal()
+                    if (!user) setShowLoginModal()
+                    if (user) handleBooking()
                   }}>
                   Reserve
                 </button>
@@ -88,12 +117,12 @@ const House = props => {
   )
 }
 
-House.getInitialProps = ({ query }) => {
+House.getInitialProps = async ({ query }) => {
   const { id } = query
+  const resp = await fetch(`${process.env.BASE_URL}/api/houses/${id}`)
+  const house = await resp.json()
 
-  return {
-    house: houses.filter(house => house.id === id)[0]
-  }
+  return { house }
 }
 
 export default House
