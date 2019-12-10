@@ -1,9 +1,10 @@
-const router = require('express').Router()
-const User = require('../models/User.js')
-const House = require('../models/House.js')
-const Review = require('../models/Review.js')
-const Booking = require('../models/Booking.js')
-const sequelize = require('../database.js')
+const router    = require('express').Router()
+const Op        = require('sequelize').Op
+const User      = require('../models/User.js')
+const House     = require('../models/House.js')
+const Review    = require('../models/Review.js')
+const Booking   = require('../models/Booking.js')
+const utils     = require('../utils');
 
 router.get('/houses', (req, res) => {
   House.findAndCountAll()
@@ -51,16 +52,55 @@ router.post('/houses/reserve', (req, res) => {
   User.findOne({where: { email }})
     .then(user => {
       Booking.create({
-        houseID: houseID,
-        userID: userID,
-        startDate: startDate,
-        endDate: endDate 
+        userID: user.id,
+        houseID,
+        startDate,
+        endDate,
       })
       .then(() => {
         res.writeHead(200, {'Content-Type': 'application/json'})
         res.end(JSON.stringify({status: 'success', message: 'ok'}))
       })
     })
+})
+
+router.post('/houses/booked', async (req, res) => {
+  const houseID = req.body.houseID 
+
+  const results = await Booking.findAll({
+    where: {
+      houseID: houseID,
+      endDate: {
+        [Op.gte]: new Date()
+      }
+    }
+  })
+
+  const bookedDates = results.map(result => {
+    const start = new Date(result.startDate)
+    const end = new Date(result.endDate)
+
+    return utils.getDatesBetweenDates(start, end)
+  })
+
+  const uniqueDates = [...new Set(bookedDates)]
+
+  res.json({
+    status: 'success',
+    message: 'ok',
+    dates: uniqueDates
+  })
+})
+
+router.post('/houses/check', async (req, res) => {
+  const { houseID, startDate, endDate } = req.body
+  const isFree = await utils.canBookThoseDates(houseID, startDate, endDate)
+  const message = isFree ? 'free' : busy 
+
+  res.json({
+    status: 'success',
+    message: message
+  })
 })
 
 module.exports = router

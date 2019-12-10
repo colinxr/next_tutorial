@@ -6,6 +6,22 @@ import fetch from 'isomorphic-unfetch'
 import Layout from '../../components/Layout'
 import DateRangePicker from '../../components/DateRangePicker'
 
+const getBookedDates = async (houseID) => {
+  try {
+    const resp = await Axios.post(`${process.env.BASE_URL}/api/houses/booked`, { houseID })
+    
+    if (resp.data.status === 'error') {
+      alert(resp.data.message)
+      return
+    }
+
+    return resp.data.dates
+  } catch (err) {
+    console.error(err)
+    return
+  }
+}
+
 const House = props => {
   const [dateChosen, setDateChosen] = useState(false)
   const [numberOfNights, setNumberOfNights] = useState(0)
@@ -30,8 +46,23 @@ const House = props => {
     return dayCount
   }
 
-  const handleBooking = () => {
-    alert('booked!')
+  const handleBooking = async () => {
+    try {
+      const house = {
+        houseID: props.house.id,
+        startDate,
+        endDate, 
+      }
+      const resp = await Axios.post('/api/houses/reserve', house)
+      if (resp.data.status === 'error') {
+        alert(resp.data.message)
+        return
+      }
+      console.log(resp.data)
+    } catch(err) {
+      console.log(error)
+      return
+    }
   }
 
   return (
@@ -48,10 +79,12 @@ const House = props => {
             </p>
             <p>{props.house.title}</p>
             {
-          props.house.reviewsCount ? (
+              props.house.reviewsCount ? (
                 <div className="reviews">
                   <h3>{
-                    props.house.reviewsCount === 1 ? `${props.house.reviewsCount} Review` : `{props.house.reviewsCount} Reviews`
+                    props.house.reviewsCount === 1 ? 
+                      `${props.house.reviewsCount} Review` : 
+                      `${props.house.reviewsCount} Reviews`
                   }</h3>
                   {
                     props.house.reviews.map((review, index) => {
@@ -78,6 +111,7 @@ const House = props => {
                 setStartDate(startDate)
                 setEndDate(endDate)
               }} 
+              bookedDates={props.bookedDates}
             />
             {dateChosen && (
               <div>
@@ -122,7 +156,9 @@ House.getInitialProps = async ({ query }) => {
   const resp = await fetch(`${process.env.BASE_URL}/api/houses/${id}`)
   const house = await resp.json()
 
-  return { house }
+  const bookedDates = await getBookedDates(id)
+
+  return { house, bookedDates }
 }
 
 export default House
