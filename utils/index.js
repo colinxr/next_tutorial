@@ -11,7 +11,7 @@ const getDatesBetweenDates = (startDate, endDate) => {
   return dates
 }
 
-const canBookThoseDates = async (houseId, startDate, endDate) => {  
+const canBookThoseDates = async (houseID, startDate, endDate) => {  
   const results = await Booking.findAll({
     where: {
       houseID: houseID,
@@ -26,4 +26,7 @@ const canBookThoseDates = async (houseId, startDate, endDate) => {
   return !(results.length > 0)
 }
 
-module.exports = { getDatesBetweenDates, canBookThoseDates }
+module.exports = { 
+  getDatesBetweenDates, 
+  canBookThoseDates, 
+}

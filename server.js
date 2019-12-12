@@ -1,26 +1,25 @@
-const express        = require('express')
-const next           = require('next')
-const dotenv         = require('dotenv');
-
 const port           = parseInt(process.env.PORT, 10) || 3000
 const dev            = process.env.NODE_env !== 'production'
+const dotenv         = require('dotenv');
+
+const express        = require('express')
+const next           = require('next')
 const nextApp        = next({ dev })
 const handle         = nextApp.getRequestHandler()
 
 const session        = require('express-session')
 const SequelizeStore = require('connect-session-sequelize')(session.Store)
 const bodyParser     = require('body-parser')
-
 const passport       = require('passport')
-const LocalStrategy  = require('passport-local').Strategy
 
 const User           = require('./models/User.js')
 const House          = require('./models/House.js')
 const Review         = require('./models/Review.js')
 const Booking        = require('./models/Booking.js')
-const sequelize      = require('./database.js')
+const sequelize      = require('./config/database.js')
 
 const routes         = require('./routes/houses')
+const bookingRoutes  = require('./routes/bookings')
 const authRoutes     = require('./routes/auth')
 
 dotenv.config();
@@ -35,40 +34,40 @@ Review.sync({ alter: true })
 Booking.sync({ alter: true })
 
 // sessionStore.sync()
+// passport.serializeUser((user, done) => {
+//   done(null, user.email)
+// })
 
-passport.use(new LocalStrategy({
-  usernameField: 'email',
-  passwordField: 'password'
-}, async function(email, password, done) {
-  if (!email || !password) {
-    done('email and password required', null);
-    return
-  }
+// passport.deserializeUser((email, done) => {
+//   User.findOne({ where: { email: email } }).then(user => done(null, user))
+// })
 
-  const user = await User.findOne({ where: {email: email}})
+// passport.use(new LocalStrategy({
+//   usernameField: 'email',
+//   passwordField: 'password'
+// }, async function(email, password, done) {
+//   if (!email || !password) {
+//     done('email and password required', null);
+//     return
+//   }
 
-  if (!user) {
-    done('User not found', null);
-    return
-  }
+//   const user = await User.findOne({ where: {email: email}})
 
-  const valid = await user.isPasswordValid(password)
+//   if (!user) {
+//     done('User not found', null);
+//     return
+//   }
 
-  if (!valid) {
-    done('email and password do not match', null);
-    return
-  }
+//   const valid = await user.isPasswordValid(password)
 
-  done(null, user);
-}))
+//   if (!valid) {
+//     done('email and password do not match', null);
+//     return
+//   }
 
-passport.serializeUser((user, done) => {
-  done(null, user.email)
-})
-
-passport.deserializeUser((email, done) => {
-  User.findOne({where: {email: email}}).then(user => done(null, user))
-})
+//   done(null, user);
+// }))
+require('./config/passport')(passport);  // pass passport for configuration
 
 nextApp.prepare().then(() => {
   const app = express()
@@ -92,144 +91,9 @@ nextApp.prepare().then(() => {
     passport.session() 
   )
 
-  app.use('/api', routes)
+  app.use('/api/houses', routes)
+  app.use('/api/bookings', bookingRoutes)
   app.use('/api/auth', authRoutes)
-  // app.get('/api/houses', (req, res) => {
-  //   House.findAndCountAll()
-  //     .then(results => {
-  //       console.log(results)
-
-  //       const houses = results.rows.map(house => house.dataValues)
-
-  //       res.writeHead(200, {
-  //         'Content-Type': 'application/json'
-  //       })
-
-  //       res.end(JSON.stringify(houses))
-  //     })
-  // })
-
-  // app.get('/api/houses/:id', (req, res) => {
-  //   // find the House 
-  //   // if House exists, find the reviews, where houseID === house.id 
-  //   // add the reviews to the house object 
-  //   // add the count to the house object 
-
-  //   const { id } = req.params
-  //   House.findByPk(id).then(house => {
-  //     if (house) {
-  //       Review.findAndCountAll({
-  //         where: { houseID: house.id }
-  //       }).then(reviews => {
-  //         house.dataValues.reviews = reviews.rows.map(review =>
-  //           review.dataValues )
-  //         house.dataValues.reviewsCount = reviews.count
-
-  //         res.writeHead(200, { 'Content-Type': 'application/json' })
-  //         res.end(JSON.stringify(house.dataValues))
-  //       })
-  //     } else {
-  //       res.writeHead(404, {'Content-Type': 'application/json'})
-  //       res.end(JSON.stringify({message: 'Not Found'}))
-  //     }
-  //   })
-  // })
-  
-  // app.post('/api/auth/register', async (req, res) => {
-  //   const { email, password, passwordConfirmation } = req.body
-
-  //   if (password !== passwordConfirmation) {
-  //     res.end(
-  //       JSON.stringify({ status: 'error', message: 'Passwords do not match' })
-  //     )
-  //     return
-  //   }
-
-  //   try {
-  //     const user = await User.create({ email, password })
-  //     // res.login(user, error => {
-  //     //   if (error) {
-  //     //     res.statusCode = 500
-  //     //     return res.end(JSON.stringify({ status: 'error', message: 'fuck' }))
-  //     //   }
-        
-  //     //   return res.end(
-  //     //     JSON.stringify({ status: 'success', message: 'Logged in' })
-  //     //   )
-  //     // })
-
-  //     req.login(user, error => {
-  //       if (error) {
-  //         res.statusCode = 500
-  //         res.end(JSON.stringify({status: 'error', message: error}))
-  //         return
-  //       }
-
-  //       return res.end(JSON.stringify({status: 'success', message: 'Logged In'}))
-  //     })
-
-  //     res.end(JSON.stringify({ status: 'success', message: 'User added' }))
-  //   } catch (error) {
-  //     res.statusCode = 500
-  //     let message = 'An error occurred'
-  //     if (error.name === 'SequelizeUniqueConstraintError') {
-  //       message = 'User already exists'
-  //     }
-  //     console.log(error)
-  //     res.end(JSON.stringify({ status: 'error', message: message }))
-  //   }
-  // })
-
-  // app.post('/api/auth/login', (req, res) => {
-  //   passport.authenticate('local', (error, user, info) => {
-  //     if (error) {
-  //       res.statusCode = 500
-  //       res.end(
-  //         JSON.stringify({
-  //           status: 'error',
-  //           message: error
-  //         })
-  //       )
-  //       return 
-  //     }
-
-  //     if (!user) {
-  //       res.status = 500
-  //       res.end(
-  //         JSON.stringify({
-  //           status: 'error',
-  //           message: 'No User found'
-  //         })
-  //       )
-  //     }
-
-  //     req.login(user, error => {
-  //       if (error) {
-  //         res.statusCode = 500
-  //         res.end(
-  //           JSON.stringify({
-  //             status: 'error',
-  //             message: error
-  //           })
-  //         )
-  //         return
-  //       }
-
-  //       return res.end(
-  //         JSON.stringify({
-  //           status: 'success',
-  //           message: 'Logged in'
-  //         })
-  //       )
-  //     })
-  //   })(req, res, next)
-  // })
-
-  // app.post('/api/auth/logout', (req, res) => {
-  //   req.logout()
-  //   req.session.destroy()
-  //   return res.end(JSON.stringify({status: 'message', message: 'loggedt out'}))
-  // })
 
   app.all('*', (req, res) => {
     return handle(req, res)

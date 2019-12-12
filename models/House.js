@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize')
-const sequelize = require('../database.js')
+const sequelize = require('../config/database.js')
 
 class House extends Sequelize.Model {}
 

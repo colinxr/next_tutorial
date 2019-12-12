@@ -6,7 +6,7 @@ const Review    = require('../models/Review.js')
 const Booking   = require('../models/Booking.js')
 const utils     = require('../utils');
 
-router.get('/houses', (req, res) => {
+router.get('/', (req, res) => {
   House.findAndCountAll()
     .then(results => {
       console.log(results)
@@ -25,7 +25,7 @@ router.get('/houses', (req, res) => {
 // if House exists, find the reviews, where houseID === house.id 
 // add the reviews to the house object 
 // add the count to the house object 
-router.get('/houses/:id', (req, res) => {
+router.get('/:id', (req, res) => {
   const { id } = req.params
   House.findByPk(id).then(house => {
     if (house) {
@@ -46,7 +46,7 @@ router.get('/houses/:id', (req, res) => {
   })
 })
 
-router.post('/houses/reserve', (req, res) => {
+router.post('/reserve', (req, res) => {
   const email = req.session.passport.user 
   const {houseID, userID, startDate, endDate} = req.body
   User.findOne({where: { email }})
@@ -64,7 +64,42 @@ router.post('/houses/reserve', (req, res) => {
     })
 })
 
-router.post('/houses/booked', async (req, res) => {
+router.post('/booked', async (req, res) => {
+  if (!req.session.passport) {
+    res.writeHead(403, {
+      'Content-Type': 'application/json'
+    })
+    res.end(
+      JSON.stringify({
+        status: 'error',
+        message: 'Unauthorized'
+      })
+    )
+
+    return
+  }
+
+  if (
+    !(await utils.canBookThoseDates(
+      req.body.houseId,
+      req.body.startDate,
+      req.body.endDate
+    ))
+  ) {
+    //busy
+    res.writeHead(500, {
+      'Content-Type': 'application/json'
+    })
+    res.end(
+      JSON.stringify({
+        status: 'error',
+        message: 'House is already booked'
+      })
+    )
+
+    return
+  }
+
   const houseID = req.body.houseID 
 
   const results = await Booking.findAll({
@@ -88,14 +123,14 @@ router.post('/houses/booked', async (req, res) => {
   res.json({
     status: 'success',
     message: 'ok',
-    dates: uniqueDates
+    dates: uniqueDates[0]
   })
 })
 
-router.post('/houses/check', async (req, res) => {
+router.post('/check', async (req, res) => {
   const { houseID, startDate, endDate } = req.body
   const isFree = await utils.canBookThoseDates(houseID, startDate, endDate)
-  const message = isFree ? 'free' : busy 
+  const message = isFree ? 'free' : 'busy' 
 
   res.json({
     status: 'success',

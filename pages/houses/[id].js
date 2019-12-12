@@ -22,7 +22,24 @@ const getBookedDates = async (houseID) => {
   }
 }
 
-const House = props => {
+const canReserve = async (house) => {
+  try {
+    const resp = await Axios.post(`${process.env.BASE_URL}/api/houses/check`, house)
+
+    if (resp.data.status === 'error') {
+      alert(resp.data.message)
+      return
+    }
+
+    if (resp.data.message === 'busy') return false
+    return true
+  } catch (error) {
+    console.error(error)
+    return
+  }
+}
+
+const House = (props) => {
   const [dateChosen, setDateChosen] = useState(false)
   const [numberOfNights, setNumberOfNights] = useState(0)
   const [startDate, setStartDate] = useState()
@@ -47,18 +64,23 @@ const House = props => {
   }
 
   const handleBooking = async () => {
+    const house = {
+      houseID: props.house.id,
+      startDate,
+      endDate,
+    }
+
+    if (!(await canReserve(house))) {
+      alert('the dates chosen are not available')
+      return 
+    }
+
     try {
-      const house = {
-        houseID: props.house.id,
-        startDate,
-        endDate, 
-      }
       const resp = await Axios.post('/api/houses/reserve', house)
       if (resp.data.status === 'error') {
         alert(resp.data.message)
         return
       }
-      console.log(resp.data)
     } catch(err) {
       console.log(error)
       return

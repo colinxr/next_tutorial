@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 
 const User = require('../models/User.js')
-const sequelize = require('../database.js')
+const sequelize = require('../config/database.js')
 
 router.post('/login', (req, res) => {
   passport.authenticate('local', (error, user, info) => {
