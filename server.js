@@ -18,7 +18,8 @@ const Review         = require('./models/Review.js')
 const Booking        = require('./models/Booking.js')
 const sequelize      = require('./config/database.js')
 
-const routes         = require('./routes/houses')
+const houseRoutes    = require('./routes/houses')
+const hostRoutes     = require('./routes/host')
 const bookingRoutes  = require('./routes/bookings')
 const authRoutes     = require('./routes/auth')
 
@@ -67,14 +68,30 @@ Booking.sync({ alter: true })
 
 //   done(null, user);
 // }))
+
+/*------------------------------------*
+//
+//  Passport configuration
+//
+/*------------------------------------*/
+
 require('./config/passport')(passport);  // pass passport for configuration
+
+
+/*------------------------------------*
+//
+//  Next.js initialiation
+//
+/*------------------------------------*/
 
 nextApp.prepare().then(() => {
   const app = express()
   
+  // set up body-parser
   app.use(bodyParser.urlencoded({extended: true}))
   app.use(bodyParser.json())
 
+  // set up session info 
   app.use(
     session({
       secret: process.env.SECRET,
@@ -91,14 +108,28 @@ nextApp.prepare().then(() => {
     passport.session() 
   )
 
-  app.use('/api/houses', routes)
+  /*------------------------------------*
+  //
+  //  Route handlers
+  //
+  /*------------------------------------*/
+  
+  app.use('/api/houses', houseRoutes)
   app.use('/api/bookings', bookingRoutes)
+  app.use('/api/host', hostRoutes)
   app.use('/api/auth', authRoutes)
 
+  // next routes 
   app.all('*', (req, res) => {
     return handle(req, res)
   })
 
+  /*------------------------------------*
+  //
+  //  Launch Server 
+  //
+  /*------------------------------------*/
+  
   app.listen(port, err => {
     if (err) throw err
     console.log('>>> here we go!')

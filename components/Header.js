@@ -25,6 +25,9 @@ const Header = () => {
           <>
             <li className='username'>{user}</li>
             <li>
+              <a href='/bookings'>My Bookings</a>
+            </li>
+            <li>
               <a href='#' onClick={ () => handleLogout() }>
                 Log Out
               </a>

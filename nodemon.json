@@ -1,0 +1,4 @@
+{
+  "verbose": true,
+  "ignore": ["components/*", "pages/*", "public/*", "next.config.js", "store.js", "package.json"]
+}

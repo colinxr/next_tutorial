@@ -9,14 +9,9 @@ const utils     = require('../utils');
 router.get('/', (req, res) => {
   House.findAndCountAll()
     .then(results => {
-      console.log(results)
-
       const houses = results.rows.map(house => house.dataValues)
 
-      res.writeHead(200, {
-        'Content-Type': 'application/json'
-      })
-
+      res.writeHead(200, {'Content-Type': 'application/json'})
       res.end(JSON.stringify(houses))
     })
 })

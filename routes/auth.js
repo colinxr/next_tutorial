@@ -1,10 +1,11 @@
 const express = require('express')
 const router = express.Router()
+const passport = require('passport')
 
 const User = require('../models/User.js')
 const sequelize = require('../config/database.js')
 
-router.post('/login', (req, res) => {
+router.post('/login', (req, res, next) => {
   passport.authenticate('local', (error, user, info) => {
     if (error) {
       res.statusCode = 500
@@ -49,7 +50,7 @@ router.post('/login', (req, res) => {
   })(req, res, next)
 })
 
-router.post('/logout', (req, res) => {
+router.post('/logout', (req, res, next) => {
   req.logout()
   req.session.destroy()
   return res.end(JSON.stringify({ status: 'message', message: 'loggedt out' }))
